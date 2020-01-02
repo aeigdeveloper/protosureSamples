@@ -19,7 +19,7 @@ from pandas.io.json import json_normalize
 
 
 def protosure_login():
-    return requests.post('https://api.protosure.net/auth/ajax_login/',
+    return requests.post('loginurl/',
                          json={"password": "password",
                                "email": "emailaddress"}
                          )
@@ -78,7 +78,7 @@ point_data_df = point_data_df.rename(columns={0: 'policynumber',1:'date_entered'
 login = protosure_login()
 
 requestData = requests.get(
-    'https://api.protosure.net/api/reports/protosurereporttoken/data/?page=1&ordering=-metaData'
+    '/protosurereportsurl/protosurereporttoken/data/?page=1&ordering=-metaData'
     '.modifiedAt&search=&pageSize=100',
     cookies=login.cookies)
 
