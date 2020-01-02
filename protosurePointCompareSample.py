@@ -1,4 +1,3 @@
-
 # coding: utf-8
 
 # In[1]:
@@ -17,16 +16,14 @@ from pandas.io.json import json_normalize
 # In[2] protosure login:
 
 
-
 def protosure_login():
-    return requests.post('loginurl/',
+    return requests.post('https://api.protosure.net/auth/ajax_login/',
                          json={"password": "password",
                                "email": "emailaddress"}
                          )
 
 
 # In[3] email connect:
-
 
 
 def email_connect():
@@ -41,7 +38,6 @@ def email_connect():
 # In[4] as400 connect:
 
 
-
 def as400_connect():
     connection = pyodbc.connect(
         'DRIVER={iSeries Access ODBC Driver};SYSTEM=systemname;SERVER=servername;DATABASE=dbname;UID=user;PWD=password')
@@ -50,7 +46,6 @@ def as400_connect():
 
 
 # In[5] :
-
 
 
 as400_connection = as400_connect()
@@ -65,20 +60,19 @@ as400_connection.close()
 # In[6] set as400 results:
 
 
-results = [(i[0],i[1],i[2],i[3],i[4]) for i in results]
+results = [(i[0], i[1], i[2], i[3], i[4]) for i in results]
 
 point_data_df = pd.DataFrame(results)
-point_data_df = point_data_df.rename(columns={0: 'policynumber',1:'date_entered',2:'premium',3:'endorsement',4:'status'})
-
+point_data_df = point_data_df.rename(
+    columns={0: 'policynumber', 1: 'date_entered', 2: 'premium', 3: 'endorsement', 4: 'status'})
 
 # In[7] get protosure results:
-
 
 
 login = protosure_login()
 
 requestData = requests.get(
-    '/protosurereportsurl/protosurereporttoken/data/?page=1&ordering=-metaData'
+    'https://api.protosure.net/api/reports/protosurereporttoken/data/?page=1&ordering=-metaData'
     '.modifiedAt&search=&pageSize=100',
     cookies=login.cookies)
 
@@ -86,9 +80,7 @@ jsonData = json.loads(requestData.content)
 
 json_protosure_data_df = json_normalize(jsonData['results'])
 
-
 # In[8] merge diff protosure to as400:
-
 
 
 merge_df = json_protosure_data_df.merge(point_data_df, how='left', left_on=['raterData.op_full_policy_number'],
@@ -97,10 +89,7 @@ merge_df = json_protosure_data_df.merge(point_data_df, how='left', left_on=['rat
 diff_df = merge_df[merge_df['policynumber'].isna()]
 diff_df = diff_df[~diff_df['raterData.op_full_policy_number'].str.contains('HAB')]
 
-
-
 # In[9] prettify results:
-
 
 
 diff_df = diff_df.rename(
@@ -108,9 +97,7 @@ diff_df = diff_df.rename(
 
 final_pd = diff_df[['Policy Number']]
 
-
 # In[10] email results:
-
 
 
 emailHtml = final_pd.to_html()
@@ -125,10 +112,7 @@ msg['To'] = email_to
 
 msg.attach(MIMEText(emailHtml, 'html'))
 
-
 # In[11]:
 
 
-
 email_connect().sendmail(email_from, email_to, msg.as_string())
-
